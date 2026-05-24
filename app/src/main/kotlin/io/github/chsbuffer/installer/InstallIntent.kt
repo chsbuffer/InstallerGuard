@@ -21,13 +21,19 @@ class InstallIntent(xposed: XposedInterface, classLoader: ClassLoader, prefs: Sh
         val executeMethod = cls.getDeclaredMethod("execute")
         log("InstallIntent: found method $executeMethod")
 
-        xposed.hook(executeMethod)
+        xposed.hook(executeMethod).apply {
+            if (xposed.apiVersion >= 102) {
+                setId(HOOK_ID)
+            }
+        }
             .intercept(createHooker(classLoader))
 
         log("InstallIntent: hook registered successfully")
     }
 
     companion object {
+        private const val HOOK_ID = "install_intent"
+
         @Volatile
         private var enabled = true
 
