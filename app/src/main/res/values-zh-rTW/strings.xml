@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">安裝器鎖定器</string>
+    <string name="app_description">強制鎖定所有安裝請求到安裝器（預設為 vvb2060 的 Shizuku 安裝器）</string>
+    <string name="framework_waiting">框架：等待連線中...</string>
+    <string name="framework_disconnected">框架：連線已中斷</string>
+    <string name="enable_module">啟用模組</string>
+    <string name="select_installer">選擇安裝器：</string>
+</resources>

@@ -1,15 +1,17 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.application")
 }
 
 android {
-    namespace = "io.github.chsbuffer.installer.xp"
-    compileSdk = 36
+    namespace = "io.github.chsbuffer.installer"
+    compileSdk = 37
 
     defaultConfig {
-        applicationId = "io.github.chsbuffer.installer.xp"
+        applicationId = "io.github.chsbuffer.installer"
         minSdk = 29
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 1
         versionName = "1.0"
     }
@@ -17,6 +19,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -27,15 +30,27 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     lint {
         checkReleaseBuilds = false
     }
 }
+kotlin {
+    compilerOptions {
+        freeCompilerArgs.addAll(
+            "-Xno-param-assertions",
+            "-Xno-receiver-assertions",
+            "-Xno-call-assertions",
+            "-Xcontext-parameters"
+        )
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
 
 dependencies {
-    compileOnly("de.robv.android.xposed:api:82")
+    compileOnly(libs.libxposed.api)
+    implementation(libs.libxposed.service)
 }

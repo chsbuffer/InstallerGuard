@@ -1,10 +1,11 @@
 package io.github.chsbuffer.installer
 
-import de.robv.android.xposed.XposedBridge
+import android.util.Log
 
 fun log(message: Any) {
+    val tag = "InstallerGuard"
     when (message) {
-        is Throwable -> XposedBridge.log(message)
-        else -> XposedBridge.log(message.toString())
+        is Throwable -> Log.e(tag, "", message)
+        else -> Log.i(tag, message.toString())
     }
 }

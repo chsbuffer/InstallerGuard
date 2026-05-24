@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">安装器锁定器</string>
+    <string name="app_description">强制锁定所有安装请求到安装器（默认为 vvb2060 的 Shizuku 安装器）</string>
+    <string name="framework_waiting">框架: 等待连接...</string>
+    <string name="framework_disconnected">框架: 连接断开</string>
+    <string name="enable_module">启用模块</string>
+    <string name="select_installer">选择安装器:</string>
+</resources>

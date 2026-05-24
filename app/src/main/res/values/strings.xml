@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_description">强制锁定所有安装请求到vvb2060的【Shizuku 安装器】</string>
-    <string name="app_name">Shizuku 安装器锁定器</string>
+    <string name="app_name">Installer Guard</string>
+    <string name="app_description">Force all installation requests to be handled by a user-specified package installer (defaults to vvb2060\'s Shizuku Package Installer)</string>
+    <string name="framework_waiting">Framework: waiting for connection...</string>
+    <string name="framework_disconnected">Framework: disconnected</string>
+    <string name="enable_module">Enable Module</string>
+    <string name="select_installer">Select Installer:</string>
 </resources>

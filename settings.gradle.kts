@@ -15,15 +15,11 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        flatDir {
-            dirs("libs")
-        }
         google()
         mavenCentral()
-        maven(url = "https://api.xposed.info")
     }
 }
 
-rootProject.name = "Shizuku Installer Guard"
+rootProject.name = "Installer Guard"
 
 include(":app")

@@ -1,11 +1,11 @@
 package io.github.chsbuffer.installer
 
-import de.robv.android.xposed.IXposedHookLoadPackage
-import de.robv.android.xposed.callbacks.XC_LoadPackage
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
-class HookInit : IXposedHookLoadPackage {
-    override fun handleLoadPackage(lpparam: XC_LoadPackage.LoadPackageParam) {
-        if (!lpparam.isFirstApplication || lpparam.classLoader == null) return
-        InstallIntent(lpparam).start()
+class HookInit : XposedModule() {
+    override fun onSystemServerStarting(param: SystemServerStartingParam) {
+        val prefs = getRemotePreferences(RemotePrefs.GROUP)
+        InstallIntent(this, param.classLoader, prefs)
     }
 }
