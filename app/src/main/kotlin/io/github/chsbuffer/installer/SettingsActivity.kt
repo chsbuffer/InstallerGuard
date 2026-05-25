@@ -9,6 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.os.Bundle
+import android.os.Process
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
@@ -16,6 +17,9 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
+import android.widget.Toast
+import io.github.libxposed.service.HotReloadResult
+import io.github.libxposed.service.HookedProcess
 import io.github.libxposed.service.XposedService
 import io.github.libxposed.service.XposedServiceHelper
 
@@ -27,6 +31,8 @@ class SettingsActivity : Activity(), XposedServiceHelper.OnServiceListener {
     private var items: List<ResolveInfo> = emptyList()
     private var frameworkText: TextView? = null
     private var enableCheck: CheckBox? = null
+    private var reloadButton: TextView? = null
+    private var reloadStatus: TextView? = null
 
     @SuppressLint("RequestInstallPackagesPolicy")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -106,6 +112,16 @@ class SettingsActivity : Activity(), XposedServiceHelper.OnServiceListener {
     context(g: ViewGroup)
     fun CheckBox(block: CheckBox.() -> Unit) = View(::CheckBox, block)
 
+    private fun ViewGroup.separator() {
+        val v = android.view.View(context).apply {
+            background = resources.getDrawable(android.R.drawable.divider_horizontal_bright, theme)
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(1)
+            ).apply { setMargins(0, dp(8), 0, dp(8)) }
+        }
+        addView(v)
+    }
+
     private fun buildHeader(): View {
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -135,6 +151,22 @@ class SettingsActivity : Activity(), XposedServiceHelper.OnServiceListener {
                 }
             }
 
+            separator()
+
+            reloadButton = TextView {
+                setText(R.string.hot_reload)
+                textSize = 16f
+                gravity = android.view.Gravity.START
+                setPadding(0, dp(8), 0, dp(4))
+                setOnClickListener { hotReload() }
+            }
+
+            reloadStatus = TextView {
+                setText(R.string.hot_reload_hint)
+                textSize = 13f
+                setTextColor(0xff888888.toInt())
+            }
+
             TextView {
                 setText(R.string.select_installer)
                 textSize = 16f
@@ -161,6 +193,14 @@ class SettingsActivity : Activity(), XposedServiceHelper.OnServiceListener {
                 append(")")
             }
             adapter?.notifyDataSetChanged()
+
+            // Enable hot reload button if supported
+            val hotReloadEnabled = (svc.frameworkProperties and PROP_RT_HOT_RELOAD) != 0L
+            reloadButton?.isEnabled = hotReloadEnabled
+            reloadStatus?.setText(
+                if (hotReloadEnabled) R.string.hot_reload_hint
+                else R.string.hot_reload_unsupported
+            )
         }
     }
 
@@ -169,6 +209,8 @@ class SettingsActivity : Activity(), XposedServiceHelper.OnServiceListener {
             service = null
             enableCheck?.isEnabled = false
             frameworkText?.setText(R.string.framework_disconnected)
+            reloadButton?.isEnabled = false
+            reloadStatus?.setText(R.string.hot_reload_unsupported)
         }
     }
 
@@ -176,6 +218,90 @@ class SettingsActivity : Activity(), XposedServiceHelper.OnServiceListener {
         service?.let {
             RemotePrefs.setComponent(it.getRemotePreferences(RemotePrefs.GROUP), component)
         }
+    }
+
+    private fun hotReload() {
+        val svc = service ?: return
+        if (svc.apiVersion >= 102) {
+            if ((svc.frameworkProperties and PROP_RT_HOT_RELOAD) == 0L) {
+                Toast.makeText(this, R.string.hot_reload_unsupported, Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            reloadStatus?.setText(R.string.hot_reload_hint)
+
+            val targets: List<HookedProcess> = try {
+                svc.getRunningTargets()
+            } catch (e: Exception) {
+                log("hotReload: getRunningTargets failed — ${e.message}")
+                Toast.makeText(this, "getRunningTargets: ${e.message}", Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            log("getRunningTargets count ${targets.count()}: ")
+            targets.map { target -> "${target.processName} (uid=${target.uid}, pid=${target.pid})" }
+                .forEach {
+                    log(it)
+                }
+
+            if (targets.isEmpty()) {
+                Toast.makeText(this, R.string.hot_reload_no_target, Toast.LENGTH_SHORT).show()
+                return
+            }
+
+            // Prefer the target running as SYSTEM_UID (system_server)
+            val target = targets.firstOrNull { it.uid == Process.SYSTEM_UID }
+                ?: targets.first()
+
+            log("hotReload: requesting reload of ${target.processName} (uid=${target.uid}, pid=${target.pid})")
+            reloadStatus?.text = getString(R.string.framework_waiting)
+            reloadButton?.isEnabled = false
+
+            try {
+                svc.hotReloadModule(target, null) { _, result ->
+                    runOnUiThread {
+                        reloadButton?.isEnabled = true
+                        when (result.status) {
+                            HotReloadResult.Status.SUCCESS -> {
+                                reloadStatus?.setText(R.string.hot_reload_success)
+                                Toast.makeText(
+                                    this@SettingsActivity,
+                                    R.string.hot_reload_success, Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                            HotReloadResult.Status.IN_PROGRESS -> {
+                                reloadStatus?.setText(R.string.framework_waiting)
+                                Toast.makeText(
+                                    this@SettingsActivity,
+                                    R.string.hot_reload_success, Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                            else -> {
+                                val msg = result.message ?: result.status.name
+                                reloadStatus?.text = getString(R.string.hot_reload_failed, msg)
+                                Toast.makeText(
+                                    this@SettingsActivity,
+                                    getString(R.string.hot_reload_failed, msg),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    reloadButton?.isEnabled = true
+                    reloadStatus?.setText(R.string.hot_reload_hint)
+                    Toast.makeText(this, "hotReloadModule: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    companion object {
+        private const val PROP_RT_HOT_RELOAD = 8L
     }
 
     private fun dp(value: Int): Int =

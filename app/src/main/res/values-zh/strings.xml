@@ -6,4 +6,10 @@
     <string name="framework_disconnected">框架: 连接断开</string>
     <string name="enable_module">启用模块</string>
     <string name="select_installer">选择安装器:</string>
+    <string name="hot_reload">热重载</string>
+    <string name="hot_reload_hint">点击重载已挂接进程</string>
+    <string name="hot_reload_success">热重载成功</string>
+    <string name="hot_reload_failed">热重载失败: %s</string>
+    <string name="hot_reload_unsupported">框架不支持热重载</string>
+    <string name="hot_reload_no_target">未找到目标进程</string>
 </resources>

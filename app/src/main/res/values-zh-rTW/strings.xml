@@ -6,4 +6,10 @@
     <string name="framework_disconnected">框架：連線已中斷</string>
     <string name="enable_module">啟用模組</string>
     <string name="select_installer">選擇安裝器：</string>
+    <string name="hot_reload">熱重載</string>
+    <string name="hot_reload_hint">點擊重載已掛鉤進程</string>
+    <string name="hot_reload_success">熱重載成功</string>
+    <string name="hot_reload_failed">熱重載失敗: %s</string>
+    <string name="hot_reload_unsupported">框架不支援熱重載</string>
+    <string name="hot_reload_no_target">未找到目標進程</string>
 </resources>

@@ -6,4 +6,10 @@
     <string name="framework_disconnected">Framework: disconnected</string>
     <string name="enable_module">Enable Module</string>
     <string name="select_installer">Select Installer:</string>
+    <string name="hot_reload">Hot Reload</string>
+    <string name="hot_reload_hint">Tap to reload the hooked process</string>
+    <string name="hot_reload_success">Hot reload successful</string>
+    <string name="hot_reload_failed">Hot reload failed: %s</string>
+    <string name="hot_reload_unsupported">Hot reload not supported by framework</string>
+    <string name="hot_reload_no_target">No target process found</string>
 </resources>

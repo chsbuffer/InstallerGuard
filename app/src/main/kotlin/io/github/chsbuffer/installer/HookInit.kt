@@ -1,29 +1,35 @@
 package io.github.chsbuffer.installer
 
 import io.github.libxposed.api.XposedModule
-import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
-import io.github.libxposed.api.XposedModuleInterface.HotReloadingParam
 import io.github.libxposed.api.XposedModuleInterface.HotReloadedParam
+import io.github.libxposed.api.XposedModuleInterface.HotReloadingParam
+import io.github.libxposed.api.XposedModuleInterface.SystemServerStartingParam
 
 class HookInit : XposedModule() {
+
+    lateinit var systemServerCL: ClassLoader
+
     override fun onSystemServerStarting(param: SystemServerStartingParam) {
+        log("onSystemServerStarting: cl=${param.classLoader}")
+        systemServerCL = param.classLoader
         val prefs = getRemotePreferences(RemotePrefs.GROUP)
         InstallIntent(this, param.classLoader, prefs)
     }
 
-    override fun onHotReloading(param: HotReloadingParam): Boolean = true
+    override fun onHotReloading(param: HotReloadingParam): Boolean {
+        log("onHotReloading — old code")
+        param.setSavedInstanceState(systemServerCL)
+        return true
+    }
 
     override fun onHotReloaded(param: HotReloadedParam) {
+        log("onHotReloaded: isSystemServer=${param.isSystemServer}, processName=${param.processName}")
+        log("oldHookHandles count ${param.oldHookHandles.count()}")
+
+        param.oldHookHandles.forEach { it.unhook() }
+
+        systemServerCL = param.savedInstanceState as ClassLoader
         val prefs = getRemotePreferences(RemotePrefs.GROUP)
-        InstallIntent.updateState(prefs)
-        for (old in param.oldHookHandles) {
-            if (old.id == "install_intent") {
-                val classLoader = old.executable.declaringClass.classLoader
-                    ?: error("Boot classloader — cannot resolve fields")
-                old.replaceHook(InstallIntent.createHooker(classLoader))
-            } else {
-                old.unhook()
-            }
-        }
+        InstallIntent(this, systemServerCL, prefs)
     }
 }
